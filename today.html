@@ -1,0 +1,33 @@
+<html>
+    <head></head>
+    <body>
+        <h1>
+            <script>
+               function fun(){
+                var uname=document.myform.uname.value;
+                var pass=document.myform.pass.value;
+                var ph=document.myform.phone.value;
+                if(uname.length<1){
+                    
+                    document.getElementById("uspan").innerHTML="Username should no be blank!";
+                    return false;
+                }
+                if(pass.length<8){
+                    document.getElementById("pspan").innerHTML="Password should not be less than 8";
+                    return false;
+                }
+                if(ph.length<1 && isNaN(ph)){
+                    document.getElementById("phspan").innerHTML="Use numeric values only";
+                    return false;
+                }
+               }
+            </script>
+        </h1>
+        <form action="" name="myform" onsubmit="return fun()">
+            Username: <input type="text" name="uname"><span id="uspan"></span><br>
+            password: <input type="password" name="pass"><span id="pspan"></span><br>
+            phone: <input type="number" name="phone"><span id="phspan"></span><br>
+            <input type="submit" value="Register">
+        </form>
+    </body>
+</html>

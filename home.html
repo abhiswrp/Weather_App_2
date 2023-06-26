@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ClimaTikk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <style>
+
+        .hero {
+            background-image: url('https://rare-gallery.com/uploads/posts/981429-Light-Fairytail-artwork-sky-lightning-clouds-nature.jpg');
+            background-size: cover;
+            color: #1f0909; 
+            padding: 20px;
+            margin-bottom: 2rem;
+
+        }
+        .button{
+            background-color: #e995da;
+            color: #000000;
+            padding: 10px 20px;
+            border-radius:40px;
+        }
+        .button:hover{
+            background-color: #75c3ea;
+            color: #87ceeb;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            background: linear-gradient(to left, #0864e4, #ffffff);
+        }
+        .weather-box {
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            background: linear-gradient(to right, #a7c3ea, #dcdee1);;
+            box-shadow: 0px 2px 6px rgba(0, 0, 3, 0.1);
+            padding: 1.5rem;
+        }
+
+        .weather-icon {
+            width: 64px;
+            height: 64px;
+        }
+
+        .city-details {
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+
+        .city-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .temperature {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .weather-description {
+            font-size: 14px;
+        }
+
+        .delete-button {
+            background-color: transparent;
+            color: #ff4444;
+            border: none;
+            padding: 0;
+            font-size: 24px;
+            cursor: pointer;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .columns {
+            display: flex;
+          }
+          
+          .column {
+            flex-basis: 50%;
+          }
+          
+    </style>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    What's the weather like?
+                </h1>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="field has-addons">
+                            <div class="control is-expanded">
+                                {{ form.name }}
+                            </div>
+                            <div class="control">
+                                <button class="button">
+                                    Add City
+                                </button>
+                            </div>
+                        </div>
+                        {% if error_message %}
+                        <div class="notification is-danger">
+                            {{ error_message }}
+                        </div>
+                        {% endif %}
+                        {% if form.name.errors %}
+                        <p class="help is-danger">{{ form.name.errors }}</p>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+  <section class="section">
+    <div class="container">
+        <div class="column">
+        {% if cities %}
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    
+                    {% for w in weather %}
+                    <div class="column">
+                    <div class="box weather-box">
+                        <article class="media">
+                            <div class="media-left ">
+                                <figure class="image is-64x64">
+                                    <img class="weather-icon" src="http://openweathermap.org/img/w/{{ w.icon }}.png" alt="Weather Icon">
+                                </figure>
+                            </div>
+                            <div class="media-content">
+                                <div class="content">
+                                    <p>
+                                        <strong class="city-name">{{ w.city }}</strong>
+                                        <br>
+                                        <span class="subtitle temperature">{{ w.temperature }}° F</span>
+                                        <br>
+                                        <span class="weather-description">{{ w.description }}</span>
+                                    </p>
+                                </div> 
+                            </div>
+                                    <div class="media-right">
+                                        <form action="/delete-city/" method="post">
+                                            {% csrf_token %}
+                                            <button class="btn btn-danger btn-sm float-right" onclick="delete_city({{ w.name }})">
+                                                <i class="fas fa-trash-alt align-right"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                        </article>
+                    </div>
+                    <div class="box weather-box">
+                        <article class="media">
+                            <div class="media-left ">
+                                {% if w.hourly_forecast %}
+                                    <h3>Hourly Forecast</h3>
+                                    <ul>
+                                        {% for forecast in w.hourly_forecast %}
+                                            <li>
+                                                <img class="weather-icon"src="http://openweathermap.org/img/wn/{{ forecast.icon }}.png" alt="Weather Icon">
+                                    
+                                                <span>{{ forecast.datetime }}</span>
+                                                <span>{{ forecast.temperature }}° F</span>
+                                                <span>{{ forecast.description }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+            </div>
+            {% else %}
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="notification is-warning">
+                        <p>No weather data available.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if cities.has_other_pages %}
+    <section class="section">
+        <div class="column">
+            <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                {% if cities.has_previous %}
+                <a class="pagination-previous" href="?page={{ cities.previous_page_number }}">Previous</a>
+                {% else %}
+                <a class="pagination-previous" disabled>Previous</a>
+                {% endif %}
+
+                <ul class="pagination-list">
+                    {% for page in cities.paginator.page_range %}
+                    {% if cities.number == page %}
+                    <li>
+                        <a class="pagination-link is-current" aria-current="page">{{ page }}</a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a class="pagination-link" href="?page={{ page }}">{{ page }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+
+                {% if cities.has_next %}
+                <a class="pagination-next" href="?page={{ cities.next_page_number }}">Next</a>
+                {% else %}
+                <a class="pagination-next" disabled>Next</a>
+                {% endif %}
+            </nav>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="section float-right">
+        <div class="column">
+            <h2 class="title">Weather Street Map</h2>
+            <div class="weather-street-map">
+                <!-- the weather street map hourly forecast here -->
+                <div id="map" style="height: 400px;"></div>
+            </div>
+        </div>
+</section>
+
+
+{% comment %}     
+
+    <footer class="footer">
+        <div class="content has-text-centered">
+            <p>
+                <strong>Weather App</strong> &copy; 2023. All rights reserved.
+            </p>
+        </div>
+    </footer> {% endcomment %}
+
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script>
+        var map;
+    
+        // Get the user's location
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var latitude = position.coords.latitude;
+                var longitude = position.coords.longitude;
+    
+                // Create a map centered on the user's location
+                map = L.map('map').setView([latitude, longitude], 13);
+    
+                // Add a tile layer from OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+                }).addTo(map);
+    
+                // Get the weather data from the server and parse it as JSON
+                var weatherData = JSON.parse('{{ weather_data|escapejs }}');
+    
+                // Iterate through the cities and add markers to the map
+                for (var i = 0; i < weatherData.length; i++) {
+                    var city = weatherData[i];
+                    var marker = L.marker([city.latitude, city.longitude]).addTo(map);
+                    marker.bindPopup('<b>' + city.city + '</b><br>' + city.description + ', Temperature: ' + city.temperature + '°F');
+    
+                    // Save weather details to the Django database
+                    saveWeatherDetails(city.city, city.temperature, city.description, city.latitude, city.longitude);
+                }
+            });
+        } else {
+            console.log("Geolocation is not supported by your browser");
+    
+            // Create a default map centered on a specific location
+            map = L.map('map').setView([26.4499, 80.3319], 13);
+    
+            // Add a tile layer from OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+            }).addTo(map);
+    
+            // Get the weather data from the server and parse it as JSON
+            var weatherData = JSON.parse('{{ weather_data|escapejs }}');
+    
+            // Iterate through the cities and add markers to the map
+            for (var i = 0; i < weatherData.length; i++) {
+                var city = weatherData[i];
+                var marker = L.marker([city.latitude, city.longitude]).addTo(map);
+                marker.bindPopup('<b>' + city.city + '</b><br>' + city.description + ', Temperature: ' + city.temperature + '°F');
+    
+                // Save weather details to the Django database
+                saveWeatherDetails(city.city, city.temperature, city.description, city.latitude, city.longitude);
+            }
+        }
+    
+        function saveWeatherDetails(city, temperature, description, latitude, longitude) {
+            // Perform an AJAX request to save weather details to the Django database
+            $.ajax({
+                type: "POST",
+                url: "{% url 'save_weather_details' %}",
+                data: {
+                    city: city,
+                    temperature: temperature,
+                    description: description,
+                    latitude: latitude,
+                    longitude: longitude,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    console.log("Weather details saved successfully");
+                },
+                error: function(xhr, status, error) {
+                    console.log("An error occurred while saving weather details: " + error);
+                }
+            });
+        }
+    </script>
+    <script>
+        function fun(){
+            var uname=document.myform.uname.value;
+            var pass
+        }
+    </script>
+    
+    
+
+</body>
+
+</html>
